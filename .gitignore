@@ -1,0 +1,17 @@
+# Binaries
+/bin/
+*.exe
+*.app
+
+# Local SQLite Database
+*.db
+*.db-journal
+*.sqlite3
+
+# Go Workspaces
+go.work
+go.work.sum
+
+# OS Specific
+.DS_Store
+Thumbs.db

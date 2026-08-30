@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package todo;
+option go_package = "github.com/penguinpoweredapps/todo/proto";
+
+enum Category {
+  WORK = 0;
+  PERSONAL = 1;
+}
+
+enum SortBy {
+  DATE_ADDED = 0;
+  DATE_DUE = 1;
+}
+
+enum SortDirection {
+  DESC = 0;
+  ASC = 1;
+}
+
+message Todo {
+  string id = 1;
+  string membership_id = 2;
+  string description = 3;
+  bool completed = 4;
+  string date_added = 5;
+  string date_due = 6;
+  Category category = 7;
+}
+
+message CreateRequest { Todo todo = 1; }
+message CreateResponse { string id = 1; }
+
+message ReadRequest { string id = 1; }
+message ReadResponse { Todo todo = 1; }
+
+message UpdateRequest { Todo todo = 1; }
+message UpdateResponse { bool success = 1; }
+
+message DeleteRequest { string id = 1; }
+message DeleteResponse { bool success = 1; }
+
+message ReadAllRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  string search_term = 3;
+  optional bool completed = 4;
+  optional Category category = 5;
+  SortBy sort_by = 6;
+  SortDirection sort_direction = 7;
+}
+
+message ReadAllResponse {
+  repeated Todo todos = 1;
+  int32 total_count = 2;
+}
+
+service TodoService {
+  rpc CreateTodo (CreateRequest) returns (CreateResponse);
+  rpc ReadTodo (ReadRequest) returns (ReadResponse);
+  rpc UpdateTodo (UpdateRequest) returns (UpdateResponse);
+  rpc DeleteTodo (DeleteRequest) returns (DeleteResponse);
+  rpc ReadAllTodos (ReadAllRequest) returns (ReadAllResponse);
+}
