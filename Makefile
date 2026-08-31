@@ -1,41 +1,50 @@
-# Output binary names
-SERVER_OUT = bin/server
-CLIENT_OUT = bin/client
+# Variables
+PROTO_DIR := proto
+SERVER_DIR := server
+CLIENT_DIR := client
+BIN_DIR := bin
 
-.PHONY: all proto build build-linux build-windows build-macos clean
+# Default target
+.PHONY: all
+all: gen build
 
-all: proto build
+# Install required gRPC Go plugins
+.PHONY: install-tools
+install-tools:
+	@echo "Installing protoc-gen-go and protoc-gen-go-grpc..."
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
-# Generate gRPC code
-proto:
-	protoc --go_out=. --go-grpc_out=. proto/todo.proto
+# Generate gRPC Go code from .proto files
+.PHONY: gen
+gen:
+	@echo "Generating gRPC Go code..."
+	protoc --go_out=. --go_opt=module=github.com/penguinpoweredapps/todo \
+	       --go-grpc_out=. --go-grpc_opt=module=github.com/penguinpoweredapps/todo \
+	       proto/todo.proto
 
-# Default build (Host OS)
+# Build the client and server binaries
+.PHONY: build
 build:
-	go build -o $(SERVER_OUT) ./server
-	go build -o $(CLIENT_OUT) ./client
+	@echo "Building binaries into $(BIN_DIR)/..."
+	@mkdir -p $(BIN_DIR)
+	go build -o $(BIN_DIR)/server ./$(SERVER_DIR)
+	go build -o $(BIN_DIR)/client ./$(CLIENT_DIR)
 
-# Native Linux Build
-build-linux:
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o $(SERVER_OUT)-linux ./server
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o $(CLIENT_OUT)-linux ./client
-
-# Cross-compile for Windows from Linux (Requires mingw-w64)
-# Ubuntu/Debian setup: sudo apt install gcc-mingw-w64
-build-windows:
-	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -o $(SERVER_OUT).exe ./server
-	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 CC=x86_64-w64-mingw32-gcc go build -o $(CLIENT_OUT).exe ./client
-
-# Cross-compile for macOS from Linux (Requires osxcross toolchain)
-build-macos:
-	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC=o64-clang go build -o $(SERVER_OUT)-darwin ./server
-	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC=o64-clang go build -o $(CLIENT_OUT)-darwin ./client
-
-# Run the server locally
+# Run the server
+.PHONY: run-server
 run-server:
-	go run server/main.go
+	@echo "Starting gRPC server..."
+	go run ./$(SERVER_DIR)
 
-# Clean up binaries and local database
+# Run the client
+.PHONY: run-client
+run-client:
+	@echo "Starting gRPC client..."
+	go run ./$(CLIENT_DIR)
+
+# Clean build artifacts
+.PHONY: clean
 clean:
-	rm -rf bin/
-	rm -f todos.db
+	@echo "Cleaning up..."
+	rm -rf $(BIN_DIR)
